@@ -6,7 +6,6 @@ import { Control, useForm } from "react-hook-form";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -16,6 +15,13 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { ProfileLinksForm } from "@/components/settings/profile-links-form";
 import { Button } from "@/components/ui/button";
+import { withPrivate } from "@/hooks/route";
+import { SettingsLayoutProps } from "../type";
+import { profile } from "@/db/schema";
+import { useContext } from "react";
+import { DatabaseContext } from "@/providers/db";
+import { Loader } from "lucide-react";
+import AlertBox from "@/components/custom/dialog";
 
 const formSchema = z.object({
   name: z.string().min(4).max(50),
@@ -34,7 +40,8 @@ const formSchema = z.object({
 type ProfileFormSchemaType = z.infer<typeof formSchema>;
 export type ProfileFormControlType = Control<ProfileFormSchemaType>;
 
-export default function ProfileSetttings() {
+function ProfileSetttings({ session }: SettingsLayoutProps) {
+  const { insertIntoDB, error, loading } = useContext(DatabaseContext);
   const form = useForm<ProfileFormSchemaType>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -43,13 +50,19 @@ export default function ProfileSetttings() {
     },
   });
 
-  function onSubmit(values: ProfileFormSchemaType) {
-    console.log(values);
+  async function onSubmit(values: ProfileFormSchemaType) {
+    let dbValues: any = {
+      name: values.name,
+    };
+    values.links.forEach((link) => {
+      dbValues[`${link.name.toLowerCase()}_url`] = link.url;
+    });
+    await insertIntoDB(profile, dbValues);
   }
 
   console.log("errors", form.formState.errors);
 
-  return (
+  return !loading && !error ? (
     <>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -73,5 +86,11 @@ export default function ProfileSetttings() {
         </form>
       </Form>
     </>
-  );
+  ) : loading ? (
+    <Loader />
+  ) : error ? (
+    <AlertBox title={"Error"} message={error.message} />
+  ) : null;
 }
+
+export default withPrivate(ProfileSetttings);

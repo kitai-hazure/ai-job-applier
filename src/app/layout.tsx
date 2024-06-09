@@ -4,7 +4,8 @@ import "./globals.css";
 import { cn } from "@/lib/utils";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
-
+import { SupabaseProvider } from "@/providers/supabase";
+import { DatabaseProvider } from "@/providers/db";
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
 export const metadata: Metadata = {
@@ -25,16 +26,20 @@ export default function RootLayout({
           inter.variable
         )}
       >
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-          forcedTheme="dark"
-        >
-          {children}
-          <Toaster />
-        </ThemeProvider>
+        <SupabaseProvider>
+          <DatabaseProvider>
+            <ThemeProvider
+              attribute="class"
+              defaultTheme="system"
+              enableSystem
+              disableTransitionOnChange
+              forcedTheme="dark"
+            >
+              {children}
+              <Toaster />
+            </ThemeProvider>
+          </DatabaseProvider>
+        </SupabaseProvider>
       </body>
     </html>
   );

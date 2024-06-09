@@ -18,6 +18,8 @@ import { Separator } from "@/components/ui/separator";
 import { Card, CardContent } from "@/components/ui/card";
 import { ProjectDescriptionForm } from "@/components/settings/projects-description-form";
 import { ProjectLinksForm } from "@/components/settings/projects-links-form";
+import { withPrivate } from "@/hooks/route";
+import { SettingsLayoutProps } from "../type";
 
 const formSchema = z.object({
   projects: z.array(
@@ -51,7 +53,7 @@ type FormSchemaType = z.infer<typeof formSchema>;
 
 export type ProjectFormControlType = Control<FormSchemaType>;
 
-export default function ProjectSettings() {
+function ProjectSettings({ session }: SettingsLayoutProps) {
   const form = useForm<FormSchemaType>({
     resolver: zodResolver(formSchema),
     defaultValues: { projects: [] },
@@ -111,3 +113,5 @@ export default function ProjectSettings() {
     </Form>
   );
 }
+
+export default withPrivate(ProjectSettings);

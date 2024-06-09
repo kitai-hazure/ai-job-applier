@@ -1,5 +1,6 @@
 import { SidebarNav } from "@/components/settings/sidebar-nav";
 import { Separator } from "@/components/ui/separator";
+import { withPrivate } from "@/hooks/route";
 import { Metadata } from "next";
 
 const sidebarNavItems = [
@@ -18,7 +19,7 @@ export const metadata: Metadata = {
   description: "Manage your account settings and preferences",
 };
 
-export default function SettingsLayout({
+function SettingsLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
@@ -45,3 +46,5 @@ export default function SettingsLayout({
     </main>
   );
 }
+
+export default SettingsLayout;
