@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "a250bae0-c792-4ecf-9608-aa55c485c74b",
+  "id": "c6940a6a-6edf-40ab-8f0f-93f25b9bc287",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "links": {
@@ -66,9 +66,9 @@
     "profile": {
       "name": "profile",
       "columns": {
-        "id": {
-          "name": "id",
-          "type": "integer",
+        "auth_id": {
+          "name": "auth_id",
+          "type": "text",
           "primaryKey": true,
           "notNull": true,
           "autoincrement": false
@@ -124,6 +124,13 @@
           "notNull": true,
           "autoincrement": false
         },
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
         "name": {
           "name": "name",
           "type": "text",
@@ -148,7 +155,21 @@
           "isUnique": true
         }
       },
-      "foreignKeys": {},
+      "foreignKeys": {
+        "projects_user_id_profile_auth_id_fk": {
+          "name": "projects_user_id_profile_auth_id_fk",
+          "tableFrom": "projects",
+          "tableTo": "profile",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "auth_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     }

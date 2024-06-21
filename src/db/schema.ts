@@ -1,7 +1,8 @@
+import { primaryKey } from 'drizzle-orm/mysql-core';
 import { integer, sqliteTable, text} from 'drizzle-orm/sqlite-core';
 
 export const profile = sqliteTable  ('profile', {
-  id: integer('id').primaryKey(),
+  auth_id: text('auth_id').primaryKey().notNull(),
   name: text('name').notNull(),
   github_url: text('github_url'),
   linkedin_url: text('linkedin_url'),
@@ -11,6 +12,7 @@ export const profile = sqliteTable  ('profile', {
 
 export const projects = sqliteTable('projects', {
     id: integer('id').primaryKey().unique(),
+    user_id: text('user_id').notNull().references(() => profile.auth_id),
     name: text('name').notNull(),
     description: text('description'),
   });
@@ -18,7 +20,7 @@ export const projects = sqliteTable('projects', {
 export const links = sqliteTable('links', {
     id: integer('id').primaryKey().unique(),
     project_id: integer('project_id').references(() => projects.id),
-    type: text('link_type', {enum: ['Github', 'Linkedin', 'Portfolio', 'Other']}).notNull(),
+    type: text('link_type', {enum: ['Github', 'Youtube', 'Preview', 'PlayStore', 'AppStore', 'Other']}).notNull(),
     url: text('url'),
 });
 

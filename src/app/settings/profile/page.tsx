@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/button";
 import { withPrivate } from "@/hooks/route";
 import { SettingsLayoutProps } from "../type";
 import { profile } from "@/db/schema";
-import { useContext } from "react";
+import { useContext, useState } from "react";
 import { DatabaseContext } from "@/providers/db";
 import { Loader } from "lucide-react";
 import AlertBox from "@/components/custom/dialog";
@@ -50,6 +50,8 @@ function ProfileSetttings({ session }: SettingsLayoutProps) {
     },
   });
 
+  const [success, showSuccess] = useState(false);
+
   async function onSubmit(values: ProfileFormSchemaType) {
     let dbValues: any = {
       name: values.name,
@@ -57,37 +59,46 @@ function ProfileSetttings({ session }: SettingsLayoutProps) {
     values.links.forEach((link) => {
       dbValues[`${link.name.toLowerCase()}_url`] = link.url;
     });
-    await insertIntoDB(profile, dbValues);
+    dbValues["auth_id"] = session?.user?.id;
+    await insertIntoDB(profile, dbValues, (result) => {
+      showSuccess(true);
+    });
   }
-
-  console.log("errors", form.formState.errors);
 
   return !loading && !error ? (
     <>
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          <FormField
-            control={form.control}
-            name="name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Name</FormLabel>
-                <FormControl>
-                  <Input placeholder="Your name" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <Separator />
-          <ProfileLinksForm control={form.control} name="links" />
-          <Separator />
-          <Button type="submit">Save</Button>
-        </form>
-      </Form>
+      {!success ? (
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Your name" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <Separator />
+            <ProfileLinksForm control={form.control} name="links" />
+            <Separator />
+            <Button type="submit">Save</Button>
+          </form>
+        </Form>
+      ) : (
+        <AlertBox
+          title="Success"
+          message="Profile created successfully"
+          onClose={() => showSuccess(false)}
+        />
+      )}
     </>
   ) : loading ? (
-    <Loader />
+    <Loader height={12} width={12} />
   ) : error ? (
     <AlertBox title={"Error"} message={error.message} />
   ) : null;

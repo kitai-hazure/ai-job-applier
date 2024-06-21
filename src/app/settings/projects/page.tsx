@@ -6,7 +6,6 @@ import { Control, useFieldArray, useForm } from "react-hook-form";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -20,6 +19,11 @@ import { ProjectDescriptionForm } from "@/components/settings/projects-descripti
 import { ProjectLinksForm } from "@/components/settings/projects-links-form";
 import { withPrivate } from "@/hooks/route";
 import { SettingsLayoutProps } from "../type";
+import { useContext, useState } from "react";
+import { DatabaseContext } from "@/providers/db";
+import { projects as projectSchema, links as linkSchema } from "@/db/schema";
+import AlertBox from "@/components/custom/dialog";
+import { Loader } from "lucide-react";
 
 const formSchema = z.object({
   projects: z.array(
@@ -54,13 +58,35 @@ type FormSchemaType = z.infer<typeof formSchema>;
 export type ProjectFormControlType = Control<FormSchemaType>;
 
 function ProjectSettings({ session }: SettingsLayoutProps) {
+  const { insertIntoDB, error, loading } = useContext(DatabaseContext);
   const form = useForm<FormSchemaType>({
     resolver: zodResolver(formSchema),
     defaultValues: { projects: [] },
   });
+  const [success, showSuccess] = useState(false);
 
-  const onSubmit = (values: FormSchemaType) => {
-    console.log(values);
+  const onSubmit = async (values: FormSchemaType) => {
+    values.projects.forEach(async (project) => {
+      const projectDB = {
+        name: project.name,
+        description: project.description.map((desc) => desc.body),
+        user_id: session?.user?.id,
+      };
+
+      const projectInDB = await insertIntoDB(projectSchema, projectDB);
+      if (projectInDB && !error && project.links) {
+        project.links.forEach(async (link) => {
+          const linkDB = {
+            project_id: projectInDB.lastInsertRowid,
+            type: link.name,
+            url: link.url,
+          };
+          await insertIntoDB(linkSchema, linkDB, (result) => {
+            showSuccess(true);
+          });
+        });
+      }
+    });
   };
 
   const { fields: projects, append: appendProject } = useFieldArray({
@@ -68,50 +94,64 @@ function ProjectSettings({ session }: SettingsLayoutProps) {
     control: form.control,
   });
 
-  return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-        {projects.map((project, index) => (
-          <Card key={project.id}>
-            <CardContent className="py-4">
-              <FormField
-                control={form.control}
-                name={`projects.${index}.name`}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Project name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="My project" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <ProjectDescriptionForm
-                control={form.control}
-                name={`projects.${index}.description`}
-              />
-              <ProjectLinksForm
-                control={form.control}
-                name={`projects.${index}.links`}
-              />
-            </CardContent>
-          </Card>
-        ))}
+  return !loading && !error ? (
+    <>
+      {!success ? (
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            {projects.map((project, index) => (
+              <Card key={project.id}>
+                <CardContent className="py-4">
+                  <FormField
+                    control={form.control}
+                    name={`projects.${index}.name`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Project name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="My project" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <ProjectDescriptionForm
+                    control={form.control}
+                    name={`projects.${index}.description`}
+                  />
+                  <ProjectLinksForm
+                    control={form.control}
+                    name={`projects.${index}.links`}
+                  />
+                </CardContent>
+              </Card>
+            ))}
 
-        <Button
-          onClick={() => {
-            appendProject({ name: "", description: [], links: [] });
-          }}
-          type="button"
-        >
-          Add Project
-        </Button>
-        <Separator />
-        <Button type="submit">Save</Button>
-      </form>
-    </Form>
-  );
+            <Button
+              onClick={() => {
+                appendProject({ name: "", description: [], links: [] });
+              }}
+              type="button"
+            >
+              Add Project
+            </Button>
+            <Separator />
+            <Button type="submit">Save</Button>
+          </form>
+        </Form>
+      ) : (
+        <AlertBox
+          title="Success"
+          message="Project has been added successfully."
+          onClose={() => showSuccess(false)}
+        />
+      )}
+    </>
+  ) : loading ? (
+    <Loader height={12} width={12} />
+  ) : error ? (
+    <AlertBox title={"Error"} message={error.message} />
+  ) : null;
 }
 
 export default withPrivate(ProjectSettings);
