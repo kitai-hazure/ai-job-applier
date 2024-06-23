@@ -19,11 +19,12 @@ import { ProjectDescriptionForm } from "@/components/settings/projects-descripti
 import { ProjectLinksForm } from "@/components/settings/projects-links-form";
 import { withPrivate } from "@/hooks/route";
 import { SettingsLayoutProps } from "../type";
-import { useContext, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { DatabaseContext } from "@/providers/db";
 import { projects as projectSchema, links as linkSchema } from "@/db/schema";
 import AlertBox from "@/components/custom/dialog";
 import { Loader } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 const formSchema = z.object({
   projects: z.array(
@@ -58,6 +59,7 @@ type FormSchemaType = z.infer<typeof formSchema>;
 export type ProjectFormControlType = Control<FormSchemaType>;
 
 function ProjectSettings({ session }: SettingsLayoutProps) {
+  const router = useRouter();
   const { insertIntoDB, error, loading } = useContext(DatabaseContext);
   const form = useForm<FormSchemaType>({
     resolver: zodResolver(formSchema),
@@ -65,6 +67,13 @@ function ProjectSettings({ session }: SettingsLayoutProps) {
   });
   const [success, showSuccess] = useState(false);
 
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      if (localStorage.getItem("project_setup")) {
+        router.replace("/dashboard");
+      }
+    }
+  }, [typeof window]);
   const onSubmit = async (values: FormSchemaType) => {
     values.projects.forEach(async (project) => {
       const projectDB = {
@@ -87,6 +96,9 @@ function ProjectSettings({ session }: SettingsLayoutProps) {
         });
       }
     });
+    if (typeof window !== "undefined" && !error) {
+      localStorage.setItem("project_setup", "true");
+    }
   };
 
   const { fields: projects, append: appendProject } = useFieldArray({

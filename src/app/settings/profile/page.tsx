@@ -18,10 +18,11 @@ import { Button } from "@/components/ui/button";
 import { withPrivate } from "@/hooks/route";
 import { SettingsLayoutProps } from "../type";
 import { profile } from "@/db/schema";
-import { useContext, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { DatabaseContext } from "@/providers/db";
 import { Loader } from "lucide-react";
 import AlertBox from "@/components/custom/dialog";
+import { useRouter } from "next/navigation";
 
 const formSchema = z.object({
   name: z.string().min(4).max(50),
@@ -41,6 +42,7 @@ type ProfileFormSchemaType = z.infer<typeof formSchema>;
 export type ProfileFormControlType = Control<ProfileFormSchemaType>;
 
 function ProfileSetttings({ session }: SettingsLayoutProps) {
+  const router = useRouter();
   const { insertIntoDB, error, loading } = useContext(DatabaseContext);
   const form = useForm<ProfileFormSchemaType>({
     resolver: zodResolver(formSchema),
@@ -51,6 +53,13 @@ function ProfileSetttings({ session }: SettingsLayoutProps) {
   });
 
   const [success, showSuccess] = useState(false);
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      if (localStorage.getItem("profile_setup")) {
+        router.replace("/settings/projects");
+      }
+    }
+  }, [typeof window]);
 
   async function onSubmit(values: ProfileFormSchemaType) {
     let dbValues: any = {
@@ -63,6 +72,9 @@ function ProfileSetttings({ session }: SettingsLayoutProps) {
     await insertIntoDB(profile, dbValues, (result) => {
       showSuccess(true);
     });
+    if (typeof window !== "undefined" && !error) {
+      localStorage.setItem("profile_setup", "true");
+    }
   }
 
   return !loading && !error ? (
