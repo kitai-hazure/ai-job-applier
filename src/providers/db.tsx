@@ -7,11 +7,9 @@ import { SQLiteTable, SelectedFields } from "drizzle-orm/sqlite-core";
 import { LibSQLDatabase, drizzle } from "drizzle-orm/libsql";
 import { SQL, sql } from "drizzle-orm";
 import { MESSAGES } from "@/constants";
-import { profile } from "@/db/schema";
+import { links, profile, projects } from "@/db/schema";
+import { ErrorState, IDBUser, ILink, IProject } from "@/app/type";
 
-interface ErrorState {
-  message: string;
-}
 interface IDatabaseContext {
   db: LibSQLDatabase<Record<string, never>> | undefined;
   error: ErrorState | undefined;
@@ -27,6 +25,7 @@ interface IDatabaseContext {
     filterQuery?: SQL
     // TODO -> MAKE IT TYPE STRICT
   ) => Promise<any>;
+  getUser: () => Promise<IDBUser | undefined>;
 }
 export const DatabaseContext = createContext<IDatabaseContext>({
   db: undefined,
@@ -34,6 +33,7 @@ export const DatabaseContext = createContext<IDatabaseContext>({
   loading: false,
   insertIntoDB: async () => undefined,
   queryDB: async () => undefined,
+  getUser: async () => undefined,
 });
 
 interface IDatabaseProviderProps {
@@ -58,24 +58,70 @@ export const DatabaseProvider = ({ children }: IDatabaseProviderProps) => {
     setDB(dbInstance);
   }, [isAuthenticated]);
 
-  useEffect(() => {
-    const getUser = async () => {
-      if (isAuthenticated && session?.user?.id) {
-        const user = await queryDB(
-          profile,
-          {
-            id: profile.auth_id,
-            name: profile.name,
-          },
-          sql`auth_id = ${session?.user?.id}`
-        );
+  const getUser = async () => {
+    if (!db || !isAuthenticated) {
+      setError({
+        message: MESSAGES.AUTH_ERROR,
+      });
+      return;
+    }
+    setLoading(true);
+    try {
+      const user = await db
+        .select()
+        .from(profile)
+        .leftJoin(projects, sql`profile.auth_id = projects.user_id`)
+        .leftJoin(links, sql`projects.id = links.project_id`)
+        .where(sql`profile.auth_id = ${session?.user?.id}`)
+        .execute();
 
-        console.log("user", user);
-      }
-    };
-
-    getUser();
-  }, [isAuthenticated, session?.user?.id]);
+      setLoading(false);
+      const dbProjects: IProject[] = [];
+      user.forEach((row: any) => {
+        const projectID = row.projects.id;
+        const localLink: ILink | null = row.links
+          ? {
+              link_type: row.links.type,
+              url: row.links.url,
+            }
+          : null;
+        if (!dbProjects.some((project) => project.id === projectID)) {
+          const project: IProject = {
+            id: projectID,
+            name: row.projects.name,
+            description: row.projects.description,
+            links: localLink ? [localLink] : null,
+          };
+          dbProjects.push(project);
+        } else {
+          const projectIndex = dbProjects.findIndex(
+            (project) => project.id === projectID
+          );
+          if (localLink !== null) {
+            if (dbProjects[projectIndex]?.links !== null) {
+              dbProjects[projectIndex].links?.push(localLink);
+            } else {
+              dbProjects[projectIndex].links = [localLink];
+            }
+          }
+        }
+      });
+      const dbUser: IDBUser = {
+        name: user[0].profile.name,
+        github_url: user[0].profile.github_url,
+        linkedin_url: user[0].profile.linkedin_url,
+        portfolio_url: user[0].profile.portfolio_url,
+        other_url: user[0].profile.other_url,
+        projects: dbProjects,
+      };
+      return dbUser;
+    } catch (err) {
+      // @ts-ignore
+      setError({ message: err.message });
+      setLoading(false);
+      return undefined;
+    }
+  };
 
   const insertIntoDB = async (
     table: SQLiteTable,
@@ -138,6 +184,7 @@ export const DatabaseProvider = ({ children }: IDatabaseProviderProps) => {
     loading,
     insertIntoDB,
     queryDB,
+    getUser,
   };
   return (
     <DatabaseContext.Provider value={value}>

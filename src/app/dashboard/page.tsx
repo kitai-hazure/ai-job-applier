@@ -4,9 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/text-area";
 import { withPrivate } from "@/hooks/route";
 import { Separator } from "@radix-ui/react-separator";
-import { useState } from "react";
+import { useContext, useState } from "react";
+import { AIContext } from "@/providers/ai";
+import AlertBox from "@/components/custom/dialog";
+import { Loader } from "lucide-react";
 
 const Dashboard = () => {
+  const { getResume, error, loading } = useContext(AIContext);
   const [jobDescription, setJobDescription] = useState("");
 
   return (
@@ -19,19 +23,34 @@ const Dashboard = () => {
           </p>
         </div>
         <Separator className="my-6" />
-        <div className="flex flex-col justify-center item-stretch h-full w-full">
-          <Textarea
-            placeholder="Start typing the job description..."
-            onChange={(e) => {
-              setJobDescription(e.target.value);
-            }}
-          />
-          <div className="w-full flex justify-center items-center">
-            <Button className="my-6 w-60" variant={"default"}>
-              Generate Resume
-            </Button>
+        {!loading && !error ? (
+          <div className="flex flex-col justify-center item-stretch h-full w-full">
+            <Textarea
+              placeholder="Start typing the job description..."
+              onChange={(e) => {
+                setJobDescription(e.target.value);
+              }}
+            />
+            <div className="w-full flex justify-center items-center">
+              <Button
+                className="my-6 w-60"
+                variant={"default"}
+                onClick={async () => {
+                  const resume = await getResume(jobDescription);
+                  console.log("RESUME: ", resume);
+                }}
+              >
+                Generate Resume
+              </Button>
+            </div>
           </div>
-        </div>
+        ) : error ? (
+          <AlertBox title="Error" message={error.message} />
+        ) : loading ? (
+          <Loader size={40} />
+        ) : (
+          <AlertBox title="Error" message={"Something went wrong"} />
+        )}
       </div>
     </main>
   );

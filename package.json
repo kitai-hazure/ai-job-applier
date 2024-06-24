@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@ai-sdk/mistral": "^0.0.19",
     "@hookform/resolvers": "^3.4.2",
     "@libsql/client": "^0.6.2",
     "@radix-ui/react-accordion": "^1.1.2",
@@ -21,6 +22,7 @@
     "@supabase/auth-ui-react": "^0.4.7",
     "@supabase/auth-ui-shared": "^0.1.8",
     "@supabase/supabase-js": "^2.43.4",
+    "ai": "^3.2.5",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "drizzle-orm": "^0.31.2",

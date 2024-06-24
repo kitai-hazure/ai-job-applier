@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/components/providers/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { SupabaseProvider } from "@/providers/supabase";
 import { DatabaseProvider } from "@/providers/db";
+import { AIProvider } from "@/providers/ai";
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
 export const metadata: Metadata = {
@@ -28,16 +29,18 @@ export default function RootLayout({
       >
         <SupabaseProvider>
           <DatabaseProvider>
-            <ThemeProvider
-              attribute="class"
-              defaultTheme="system"
-              enableSystem
-              disableTransitionOnChange
-              forcedTheme="dark"
-            >
-              {children}
-              <Toaster />
-            </ThemeProvider>
+            <AIProvider>
+              <ThemeProvider
+                attribute="class"
+                defaultTheme="system"
+                enableSystem
+                disableTransitionOnChange
+                forcedTheme="dark"
+              >
+                {children}
+                <Toaster />
+              </ThemeProvider>
+            </AIProvider>
           </DatabaseProvider>
         </SupabaseProvider>
       </body>
