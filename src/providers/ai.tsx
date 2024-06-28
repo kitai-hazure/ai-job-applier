@@ -62,7 +62,7 @@ export const AIProvider = ({ children }: IAIProviderProps) => {
     ${jobDescription}
     `;
 
-    const jdObject = await generateObjectFromLLM({
+    const jdObject: any = await generateObjectFromLLM({
       mistralModelID: "mistral-large-latest",
       outputSchema: jdSchema,
       prompt: basicPrompt,
@@ -201,7 +201,7 @@ export const AIProvider = ({ children }: IAIProviderProps) => {
     setLoading(true);
     try {
       const structuredJobDescription = await generateJDPrompt(jobDescription);
-      const resumeObject = await getResumeSchema(structuredJobDescription);
+      const resumeObject: any = await getResumeSchema(structuredJobDescription);
 
       const resume: IResume = {
         name: resumeObject.name,

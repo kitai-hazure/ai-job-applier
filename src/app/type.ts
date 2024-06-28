@@ -1,13 +1,10 @@
-import { projects } from "@/db/schema";
-import { MistralChatModelId } from "@ai-sdk/mistral";
-import { CallSettings } from "ai";
 import { Schema, z } from "zod";
 
 export interface GenerateLLMObjectProps {
     outputSchema: Schema;
-    mistralModelID: MistralChatModelId;
+    mistralModelID: any;
     prompt: string;
-    settings?: CallSettings;
+    settings?: any;
   }
 
   export const jdSchema = z.object({
