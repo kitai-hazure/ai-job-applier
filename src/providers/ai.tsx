@@ -31,6 +31,7 @@ interface IAIProviderProps {
 
 const mistral = createMistral({
   apiKey: process.env.NEXT_PUBLIC_MISTRAL_API_KEY,
+  baseURL: "https://api.mistral.ai/v1",
 });
 
 export const AIProvider = ({ children }: IAIProviderProps) => {

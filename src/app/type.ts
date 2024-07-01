@@ -53,18 +53,20 @@ export interface IDBUser {
 }
 
 export const resumeSchema = z.object({
-    name: z.string(),
-    portfolio: z.string(),
-    linkedin: z.string(),
-    projects: z.union([z.string(), z.array(z.object({
-        title: z.string(),
-        description: z.string(),
-        link: z.array(z.object({
-            type: z.string(),
-            url: z.string(),
-        }))
-    }))]),
-    skills: z.union([z.string(), z.array(z.string())]) ,
+    // can be null or string
+    name: z.nullable(z.string()),
+    portfolio: z.nullable(z.string()),
+    linkedin: z.nullable(z.string()),
+    projects: z.nullable(z.union([z.nullable(z.string()), 
+        z.nullable(z.array(z.object({
+        title: z.nullable(z.string()),
+        description: z.nullable(z.string()),
+        link: z.nullable(z.array(z.object({
+            type: z.nullable(z.string()),
+            url: z.nullable(z.string()),
+        })))
+    })))])),
+    skills: z.nullable(z.union([z.string(), z.array(z.string())])),
 })
 
 export interface ErrorState {

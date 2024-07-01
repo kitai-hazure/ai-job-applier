@@ -8,9 +8,11 @@ import { useContext, useState } from "react";
 import { AIContext } from "@/providers/ai";
 import AlertBox from "@/components/custom/dialog";
 import { Loader } from "lucide-react";
+import { DocContext } from "@/providers/doc";
 
 const Dashboard = () => {
   const { getResume, error, loading } = useContext(AIContext);
+  const { error: docError, generateResumePDF } = useContext(DocContext);
   const [jobDescription, setJobDescription] = useState("");
 
   return (
@@ -37,7 +39,7 @@ const Dashboard = () => {
                 variant={"default"}
                 onClick={async () => {
                   const resume = await getResume(jobDescription);
-                  console.log("RESUME: ", resume);
+                  generateResumePDF(resume);
                 }}
               >
                 Generate Resume

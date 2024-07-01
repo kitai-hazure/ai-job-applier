@@ -7,6 +7,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { SupabaseProvider } from "@/providers/supabase";
 import { DatabaseProvider } from "@/providers/db";
 import { AIProvider } from "@/providers/ai";
+import { DocProvider } from "@/providers/doc";
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
 export const metadata: Metadata = {
@@ -30,16 +31,18 @@ export default function RootLayout({
         <SupabaseProvider>
           <DatabaseProvider>
             <AIProvider>
-              <ThemeProvider
-                attribute="class"
-                defaultTheme="system"
-                enableSystem
-                disableTransitionOnChange
-                forcedTheme="dark"
-              >
-                {children}
-                <Toaster />
-              </ThemeProvider>
+              <DocProvider>
+                <ThemeProvider
+                  attribute="class"
+                  defaultTheme="system"
+                  enableSystem
+                  disableTransitionOnChange
+                  forcedTheme="dark"
+                >
+                  {children}
+                  <Toaster />
+                </ThemeProvider>
+              </DocProvider>
             </AIProvider>
           </DatabaseProvider>
         </SupabaseProvider>
