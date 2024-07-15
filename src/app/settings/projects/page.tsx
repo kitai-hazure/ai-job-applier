@@ -13,7 +13,6 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { Card, CardContent } from "@/components/ui/card";
 import { ProjectDescriptionForm } from "@/components/settings/projects-description-form";
 import { ProjectLinksForm } from "@/components/settings/projects-links-form";
@@ -25,6 +24,9 @@ import { projects as projectSchema, links as linkSchema } from "@/db/schema";
 import AlertBox from "@/components/custom/dialog";
 import { Loader } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { ThirdPartyConnectorContext } from "@/providers/thirdPartyConnector";
+import { SupabaseContext } from "@/providers/supabase";
+import { getDefaultProjects } from "./utils";
 
 const formSchema = z.object({
   projects: z.array(
@@ -60,10 +62,12 @@ export type ProjectFormControlType = Control<FormSchemaType>;
 
 function ProjectSettings({ session }: SettingsLayoutProps) {
   const router = useRouter();
+  const { githubProjects } = useContext(SupabaseContext);
+  const { connectGithub } = useContext(ThirdPartyConnectorContext);
   const { insertIntoDB, error, loading } = useContext(DatabaseContext);
   const form = useForm<FormSchemaType>({
     resolver: zodResolver(formSchema),
-    defaultValues: { projects: [] },
+    defaultValues: { projects: getDefaultProjects(githubProjects) },
   });
   const [success, showSuccess] = useState(false);
 
@@ -74,6 +78,7 @@ function ProjectSettings({ session }: SettingsLayoutProps) {
       }
     }
   }, [typeof window]);
+
   const onSubmit = async (values: FormSchemaType) => {
     values.projects.forEach(async (project) => {
       const projectDB = {
@@ -109,48 +114,97 @@ function ProjectSettings({ session }: SettingsLayoutProps) {
   return !loading && !error ? (
     <>
       {!success ? (
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-            {projects.map((project, index) => (
-              <Card key={project.id}>
-                <CardContent className="py-4">
-                  <FormField
-                    control={form.control}
-                    name={`projects.${index}.name`}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Project name</FormLabel>
-                        <FormControl>
-                          <Input placeholder="My project" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <ProjectDescriptionForm
-                    control={form.control}
-                    name={`projects.${index}.description`}
-                  />
-                  <ProjectLinksForm
-                    control={form.control}
-                    name={`projects.${index}.links`}
-                  />
-                </CardContent>
-              </Card>
-            ))}
+        <div className="space-y-8 flex flex-col justify-center w-full max-w-2xl mx">
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+              <div
+                className="
+                w-full flex flex-row justify-between items-center
+              "
+              >
+                <div
+                  className="
+                  flex flex-row justify-between items-center space-x-4
+                "
+                >
+                  <Button
+                    onClick={() => {
+                      appendProject({ name: "", description: [], links: [] });
+                    }}
+                    type="button"
+                  >
+                    Add Project
+                  </Button>
 
-            <Button
-              onClick={() => {
-                appendProject({ name: "", description: [], links: [] });
-              }}
-              type="button"
-            >
-              Add Project
-            </Button>
-            <Separator />
-            <Button type="submit">Save</Button>
-          </form>
-        </Form>
+                  <Button
+                    onClick={connectGithub}
+                    type="button"
+                    disabled={githubProjects !== undefined}
+                  >
+                    Connect Github
+                  </Button>
+                </div>
+
+                <Button type="submit" disabled={projects?.length <= 0}>
+                  Save
+                </Button>
+              </div>
+              {projects.map((project, index) => (
+                <Card key={project.id}>
+                  <CardContent className="py-4">
+                    <FormField
+                      control={form.control}
+                      name={`projects.${index}.name`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Project name</FormLabel>
+                          <FormControl>
+                            <Input placeholder="My project" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <ProjectDescriptionForm
+                      control={form.control}
+                      name={`projects.${index}.description`}
+                    />
+
+                    <ProjectLinksForm
+                      control={form.control}
+                      name={`projects.${index}.links`}
+                    />
+                    <div
+                      style={{
+                        width: "100%",
+                        display: "flex",
+                        flexDirection: "row",
+                        justifyContent: "flex-end",
+                      }}
+                    >
+                      <Button
+                        type="button"
+                        style={{
+                          background: "red",
+                          color: "white",
+                          marginTop: 10,
+                        }}
+                        onClick={() => {
+                          form.setValue(
+                            "projects",
+                            projects.filter((_, i) => i !== index)
+                          );
+                        }}
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </form>
+          </Form>
+        </div>
       ) : (
         <AlertBox
           title="Success"

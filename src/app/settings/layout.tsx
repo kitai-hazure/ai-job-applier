@@ -25,7 +25,7 @@ function SettingsLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <main className="">
+    <main className="h-screen">
       <div className="space-y-6 p-6 pb-16 md:block md:p-10">
         <div className="space-y-0.5">
           <h2 className="text-2xl font-bold tracking-tight">Settings</h2>

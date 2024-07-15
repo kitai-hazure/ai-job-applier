@@ -23,9 +23,29 @@ import { DatabaseContext } from "@/providers/db";
 import { Loader } from "lucide-react";
 import AlertBox from "@/components/custom/dialog";
 import { useRouter } from "next/navigation";
+import { ProfileExperienceForm } from "@/components/settings/profile-experience-form";
+import { ProfileEducationForm } from "@/components/settings/profile-education-form";
 
 const formSchema = z.object({
   name: z.string().min(4).max(50),
+  experiences: z.array(
+    z.object({
+      title: z.string().min(4).max(50),
+      company: z.string().min(4).max(50),
+      description: z.string().min(10).max(200),
+      start_date: z.date(),
+      end_date: z.date(),
+    })
+  ),
+  education: z.array(
+    z.object({
+      school: z.string().min(4).max(50),
+      degree: z.string().min(4).max(50),
+      field_of_study: z.string().min(4).max(50),
+      start_date: z.date(),
+      end_date: z.date(),
+    })
+  ),
   links: z
     .array(
       z.object({
@@ -49,6 +69,8 @@ function ProfileSetttings({ session }: SettingsLayoutProps) {
     defaultValues: {
       name: "",
       links: [],
+      education: [],
+      experiences: [],
     },
   });
 
@@ -62,19 +84,20 @@ function ProfileSetttings({ session }: SettingsLayoutProps) {
   }, [typeof window]);
 
   async function onSubmit(values: ProfileFormSchemaType) {
-    let dbValues: any = {
-      name: values.name,
-    };
-    values.links.forEach((link) => {
-      dbValues[`${link.name.toLowerCase()}_url`] = link.url;
-    });
-    dbValues["auth_id"] = session?.user?.id;
-    await insertIntoDB(profile, dbValues, (result) => {
-      showSuccess(true);
-    });
-    if (typeof window !== "undefined" && !error) {
-      localStorage.setItem("profile_setup", "true");
-    }
+    console.log("values: ", values);
+    // let dbValues: any = {
+    //   name: values.name,
+    // };
+    // values.links.forEach((link) => {
+    //   dbValues[`${link.name.toLowerCase()}_url`] = link.url;
+    // });
+    // dbValues["auth_id"] = session?.user?.id;
+    // await insertIntoDB(profile, dbValues, (result) => {
+    //   showSuccess(true);
+    // });
+    // if (typeof window !== "undefined" && !error) {
+    //   localStorage.setItem("profile_setup", "true");
+    // }
   }
 
   return !loading && !error ? (
@@ -97,6 +120,10 @@ function ProfileSetttings({ session }: SettingsLayoutProps) {
             />
             <Separator />
             <ProfileLinksForm control={form.control} name="links" />
+            <Separator />
+            <ProfileExperienceForm control={form.control} name="experiences" />
+            <Separator />
+            <ProfileEducationForm control={form.control} name="education" />
             <Separator />
             <Button type="submit">Save</Button>
           </form>
